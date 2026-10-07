@@ -1,0 +1,20 @@
+# 依赖
+node_modules/
+
+# 构建产物（npm run build / pack 生成）
+output/
+
+# 本地调试授权配置：含真实凭证，不要提交
+# 需要时从 config.example.json 复制一份改名为 config.json
+config.json
+
+# lock 文件不提交：依赖版本已在 package.json 里精确锁定（不带 ^ / ~），
+# 无需依赖 lock 文件即可复现安装结果。
+package-lock.json
+
+# 杂项
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,10 @@
+{
+  "_comment": "本地调试授权用的 mock 配置。复制本文件为 config.json 后填入你的测试凭证（config.json 已被 .gitignore 忽略，不会提交）。用户真实授权信息由 AI 表格代管、本地无法解密，只能 mock。",
+  "_HeaderBearerToken 用法": "authorizations 直接写字符串，框架会发出 Authorization: Bearer <值>",
+  "authorizations": "your-local-mock-token",
+  "_MultiHeaderToken 用法": "若授权类型是 MultiHeaderToken，把 authorizations 换成对象形式，如下：",
+  "_示例": {
+    "id-a": "AAAAAA",
+    "id-b": "BBBBBB"
+  }
+}

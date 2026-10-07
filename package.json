@@ -1,0 +1,22 @@
+{
+  "name": "ai-image-gen-field",
+  "version": "1.0.0",
+  "description": "AI table field decorator: generate images via OpenAI-compatible images/generations & images/edits APIs with user-provided API key",
+  "main": "index.js",
+  "scripts": {
+    "start": "dingtalk-docs-cool-app start:field",
+    "build": "dingtalk-docs-cool-app pack:field",
+    "pack": "dingtalk-docs-cool-app pack:field",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dingtalk-docs-cool-app": "0.3.9",
+    "@types/node-fetch": "2.6.12"
+  },
+  "devDependencies": {
+    "typescript": "4.9.5",
+    "@types/node": "16.18.126"
+  }
+}
