@@ -6,7 +6,7 @@
   "scripts": {
     "start": "dingtalk-docs-cool-app start:field",
     "build": "dingtalk-docs-cool-app pack:field",
-    "pack": "dingtalk-docs-cool-app pack:field",
+    "pack": "dingtalk-docs-cool-app pack:field && node scripts/clean-manifest.js",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "author": "",
