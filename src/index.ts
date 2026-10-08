@@ -6,8 +6,16 @@ import {
   AuthorizationType,
 } from 'dingtalk-docs-cool-app';
 import * as https from 'https';
+import * as fs from 'fs';
 
 const { t } = fieldDecoratorKit;
+
+/** 调试日志：写入本地文件（/tmp/ai-field-debug.log），排查前端调度问题不依赖 stdout 缓冲 */
+function debugLog(line: string): void {
+  try {
+    fs.appendFileSync('/tmp/ai-field-debug.log', `[${new Date().toISOString()}] ${line}\n`);
+  } catch { /* ignore */ }
+}
 
 /**
  * 域名白名单：只写域名，不带协议/路径/端口。
@@ -160,7 +168,7 @@ function detectVideoProto(model: string, override: string): 'sora' | 'bailian' {
 }
 
 async function executeVideo(context: any, formData: any, target: URL, firstImageUrl: string): Promise<any> {
-  const model = String(formData.model || '').trim();
+  const model = String(formData.videoModel || '').trim();
   const prompt = String(formData.promptField ?? '').trim();
   const proto = detectVideoProto(model, String(formData.videoProtocol || 'auto'));
   const origin = target.origin;
@@ -259,8 +267,10 @@ fieldDecoratorKit.setDecorator({
       baseUrlLabel: '接口 Base URL（可选）',
       baseUrlTip:
         'OpenAI 兼容服务地址，留空默认 https://api.openai.com/v1。请求将调用 {BaseURL}/images/generations（无参考图）或 /images/edits（有参考图）。服务商域名需在代码 WHITELIST 中',
-      modelLabel: '模型名称',
-      modelTip: '图片如 gpt-image-2、qwen-image-3.0；视频如 veo_3_1-fast、happyhorse-1.1-t2v/i2v、wan2.6-i2v（协议自动识别）',
+      imageModelLabel: '图片模型',
+      imageModelTip: '选择文生图/图生图使用的模型',
+      videoModelLabel: '视频模型',
+      videoModelTip: '选择文生视频/图生视频使用的模型（Seedance/Veo 自动走 Sora 式 /v1/videos 协议）',
       promptFieldLabel: '提示词（选择文本字段）',
       refFieldLabel: '参考图（可多选附件字段）',
       refFieldTip:
@@ -295,8 +305,10 @@ fieldDecoratorKit.setDecorator({
       baseUrlLabel: 'Base URL (optional)',
       baseUrlTip:
         'OpenAI-compatible endpoint. Defaults to https://api.openai.com/v1 if empty. Calls {BaseURL}/images/generations (text-to-image) or /images/edits (with reference images). Provider domain must be in the code WHITELIST',
-      modelLabel: 'Model name',
-      modelTip: 'Image: gpt-image-2, qwen-image-3.0... Video: veo_3_1-fast, happyhorse-1.1-t2v/i2v (protocol auto-detected)',
+      imageModelLabel: 'Image model',
+      imageModelTip: 'Choose the model for text/image-to-image',
+      videoModelLabel: 'Video model',
+      videoModelTip: 'Choose the model for text/image-to-video (Seedance/Veo use the Sora-style /v1/videos protocol)',
       promptFieldLabel: 'Prompt (select a text field)',
       outLabel: 'Output type',
       outImage: 'Image',
@@ -363,11 +375,32 @@ fieldDecoratorKit.setDecorator({
     },
     {
       key: 'model',
-      label: t('modelLabel'),
-      component: FormItemComponent.Textarea,
-      props: { placeholder: 'gpt-image-1 / dall-e-2 / qwen-image ...' },
+      label: t('imageModelLabel'),
+      component: FormItemComponent.SingleSelect,
+      props: {
+        defaultValue: 'gpt-image-2',
+        options: [
+          { key: 'gpt-image-2', title: 'GPT Image 2' },
+          { key: 'doubao-seedream-4-0-250828', title: 'Seedream 4.0' },
+        ],
+      },
       validator: { required: true },
-      tooltips: { title: t('modelTip') },
+      tooltips: { title: t('imageModelTip') },
+    },
+    {
+      key: 'videoModel',
+      label: t('videoModelLabel'),
+      component: FormItemComponent.SingleSelect,
+      props: {
+        defaultValue: 'doubao-seedance-2-5-260628',
+        options: [
+          { key: 'doubao-seedance-2-5-260628', title: 'Seedance 2.5' },
+          { key: 'doubao-seedance-2-0-260128', title: 'Seedance 2.0' },
+          { key: 'veo_3_1', title: 'Veo 3.1' },
+        ],
+      },
+      validator: { required: true },
+      tooltips: { title: t('videoModelTip') },
     },
     {
       key: 'baseUrl',
@@ -460,6 +493,24 @@ fieldDecoratorKit.setDecorator({
   },
 
   execute: async (context, formData) => {
+    const __t0 = Date.now();
+    debugLog(
+      `[execute] START logId=${context?.logId} outputType=${formData?.outputType} model=${formData?.model} ` +
+      `videoModel=${formData?.videoModel} baseUrl=${formData?.baseUrl} ` +
+      `promptLen=${String(formData?.promptField ?? '').length} refRaw=${JSON.stringify(formData?.refImageField || null)?.slice(0, 300)}`,
+    );
+    try {
+      const __result = await executeImpl(context, formData);
+      debugLog(`[execute] END +${Date.now() - __t0}ms result=${JSON.stringify(__result).slice(0, 600)}`);
+      return __result;
+    } catch (e: any) {
+      debugLog(`[execute] THREW +${Date.now() - __t0}ms: ${e?.message || e}`);
+      throw e;
+    }
+  },
+});
+
+async function executeImpl(context: any, formData: any) {
     // ---- 校验配置 ----
     const baseUrlRaw = (String(formData.baseUrl || '').trim()) || DEFAULT_BASE_URL;
     let target: URL;
@@ -624,7 +675,6 @@ fieldDecoratorKit.setDecorator({
         },
       ],
     };
-  },
-});
+}
 
 export default fieldDecoratorKit;
